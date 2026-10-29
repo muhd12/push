@@ -1,18 +1,23 @@
 name: scp files
-on:
-  push:
+
+on: [push]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Copy files via SSH
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
-          port: 22
-          source: "."
-          target: /var/www/html
+
+      - name: Copy files via SSH Password
+        env:
+          SSH_HOST: ${{ secrets.HOST }}
+          SSH_USER: ${{ secrets.USERNAME }}
+          SSH_PASSWORD: ${{ secrets.PASSWORD }}
+          SSH_PORT: ${{ secrets.PORT }}
+        run: |
+          # Install sshpass to allow password login in scripts
+          sudo apt-get update && sudo apt-get install -y sshpass
+          
+          # Disable host key checking and copy files via scp
+          sshpass -p "$SSH_PASSWORD" scp -P "$SSH_PORT" -o StrictHostKeyChecking=no tests/a.txt tests/b.txt "$SSH_USER@$SSH_HOST:your_server_target_folder_path"
