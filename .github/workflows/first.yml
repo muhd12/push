@@ -1,48 +1,15 @@
-name: Deploy website via SCP
-
-on:
-  push:
-    branches:
-      - main
-
+name: scp files
+on: [push]
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Verify website files
-        run: |
-          ls -la
-          test -f index.html
-          test -f script.js
-          test -f styles.css
-
-      - name: Install sshpass
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y sshpass
-
-      - name: Copy files via SSH Password
-        env:
-          SSH_HOST: ${{ secrets.HOST }}
-          SSH_USER: ${{ secrets.USERNAME }}
-          SSH_PASSWORD: ${{ secrets.PASSWORD }}
-          SSH_PORT: ${{ secrets.PORT }}
-        run: |
-          set -eu
-
-          if [ -z "$SSH_HOST" ] || [ -z "$SSH_USER" ] || [ -z "$SSH_PASSWORD" ]; then
-            echo "Error: HOST, USERNAME, and PASSWORD secrets must be configured."
-            exit 1
-          fi
-
-          SSH_PORT="${SSH_PORT:-22}"
-
-          sshpass -p "$SSH_PASSWORD" scp \
-            -P "$SSH_PORT" \
-            -o StrictHostKeyChecking=accept-new \
-            index.html script.js styles.css \
-            "$SSH_USER@$SSH_HOST:/var/www/html/"
+      - uses: actions/checkout@v4
+      - name: Copy files via SSH
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          source: "."
+          target: "/var/www/html"
